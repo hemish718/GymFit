@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymFit - Trainer Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; font-family: 'Inter', sans-serif; color: #fff; padding: 20px; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid rgba(245,184,27,0.2); }
+        .logo h1 { font-size: 28px; background: linear-gradient(135deg, #fff, #f5b81b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .back-btn { background: rgba(245,184,27,0.15); border: 1px solid #f5b81b; padding: 8px 20px; border-radius: 30px; color: #f5b81b; text-decoration: none; font-weight: 500; transition: 0.3s; }
+        .back-btn:hover { background: #f5b81b; color: #000; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #111; border-radius: 20px; padding: 20px; text-align: center; border-left: 4px solid #f5b81b; }
+        .stat-number { font-size: 28px; font-weight: 800; color: #f5b81b; }
+        .stat-label { font-size: 13px; color: #aaa; }
+        
+        .section-title { font-size: 20px; margin: 25px 0 15px 0; border-left: 4px solid #f5b81b; padding-left: 15px; }
+        
+        .trainer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .trainer-card { background: #111; border-radius: 16px; padding: 20px; border-left: 4px solid #f5b81b; transition: 0.3s; }
+        .trainer-card:hover { transform: translateY(-5px); }
+        .trainer-icon { font-size: 50px; margin-bottom: 10px; }
+        .trainer-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .trainer-spec { color: #f5b81b; font-size: 13px; margin-bottom: 10px; }
+        .trainer-rating { color: #ffd700; margin-bottom: 10px; }
+        .trainer-price { font-size: 18px; font-weight: bold; margin: 10px 0; }
+        .book-btn { background: #f5b81b; color: #000; border: none; padding: 8px 16px; border-radius: 25px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .book-btn:hover { transform: scale(1.02); }
+        
+        .booking-list { background: #111; border-radius: 16px; padding: 20px; margin-bottom: 30px; }
+        .booking-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #222; flex-wrap: wrap; gap: 10px; }
+        .booking-item:last-child { border-bottom: none; }
+        .booking-trainer { font-weight: bold; color: #f5b81b; }
+        .booking-date { color: #aaa; font-size: 14px; }
+        .booking-status { padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .status-confirmed { background: rgba(0,255,0,0.2); color: #00ff00; }
+        .status-pending { background: rgba(245,184,27,0.2); color: #f5b81b; }
+        .status-cancelled { background: rgba(255,68,68,0.2); color: #ff4444; }
+        .cancel-btn { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 5px 15px; border-radius: 20px; cursor: pointer; }
+        .rate-btn { background: transparent; border: 1px solid #f5b81b; color: #f5b81b; padding: 5px 15px; border-radius: 20px; cursor: pointer; }
+        
+        .package-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .package-card { background: #1a1a1a; border-radius: 16px; padding: 15px; text-align: center; border: 1px solid #333; }
+        .package-price { font-size: 24px; font-weight: bold; color: #f5b81b; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; max-width: 450px; width: 90%; border-left: 4px solid #f5b81b; }
+        .modal-content h2 { margin-bottom: 20px; color: #f5b81b; }
+        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 10px; margin-bottom: 12px; background: #252525; border: 1px solid #333; border-radius: 10px; color: #fff; }
+        .slot-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+        .slot-btn { background: #252525; border: 1px solid #333; padding: 8px 16px; border-radius: 25px; cursor: pointer; }
+        .slot-btn.selected { background: #f5b81b; color: #000; border-color: #f5b81b; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 15px; }
+        .save-btn { background: #f5b81b; color: #000; border: none; padding: 8px 20px; border-radius: 25px; cursor: pointer; }
+        .cancel-btn { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 8px 20px; border-radius: 25px; cursor: pointer; }
+        
+        footer { text-align: center; padding: 20px; color: #555; border-top: 1px solid #1a1a1a; margin-top: 30px; }
+        @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo"><h1>👨‍🏫 GymFit | Trainer Booking</h1></div>
+        <a href="/user/dash/" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-number">{{ total_bookings }}</div><div class="stat-label">Total Sessions</div></div>
+        <div class="stat-card"><div class="stat-number">{{ completed_bookings }}</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><div class="stat-number">{{ upcoming_bookings|length }}</div><div class="stat-label">Upcoming</div></div>
+        <div class="stat-card"><div class="stat-number">{{ trainers|length }}</div><div class="stat-label">Trainers</div></div>
+    </div>
+
+    <!-- Upcoming Bookings -->
+    {% if upcoming_bookings %}
+    <div class="booking-list">
+        <h3 style="margin-bottom: 15px;"><i class="fas fa-calendar-alt" style="color:#f5b81b;"></i> Upcoming Sessions</h3>
+        {% for booking in upcoming_bookings %}
+        <div class="booking-item">
+            <div>
+                <div class="booking-trainer">{{ booking.trainer.name }}</div>
+                <div class="booking-date">{{ booking.booking_date|date:"d M Y" }} at {{ booking.booking_time|time:"h:i A" }}</div>
+            </div>
+            <div>
+                <span class="booking-status status-{{ booking.booking_status }}">{{ booking.booking_status|title }}</span>
+                <button class="cancel-btn" onclick="cancelBooking({{ booking.id }})">Cancel</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Trainers Section -->
+    <h3 class="section-title"><i class="fas fa-chalkboard-user"></i> Our Trainers</h3>
+    <div class="trainer-grid">
+        {% for trainer in trainers %}
+        <div class="trainer-card">
+            <div class="trainer-icon">{{ trainer.image_icon }}</div>
+            <div class="trainer-name">{{ trainer.name }}</div>
+            <div class="trainer-spec">{{ trainer.specialization }}</div>
+            <div class="trainer-rating">
+                {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= trainer.rating %}
+                        <i class="fas fa-star"></i>
+                    {% else %}
+                        <i class="far fa-star"></i>
+                    {% endif %}
+                {% endfor %}
+                ({{ trainer.rating }})
+            </div>
+            <div class="trainer-price">₹{{ trainer.price_per_session }}/session</div>
+            <div class="trainer-bio" style="color:#aaa; font-size:12px; margin:10px 0;">{{ trainer.bio|truncatechars:80 }}</div>
+            <button class="book-btn" onclick="openBookingModal({{ trainer.id }}, '{{ trainer.name }}', {{ trainer.price_per_session }})">Book Now →</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Packages -->
+    <h3 class="section-title"><i class="fas fa-gift"></i> Membership Packages</h3>
+    <div class="package-grid">
+        {% for package in packages %}
+        <div class="package-card">
+            <div style="font-size: 16px; font-weight: bold;">{{ package.package_name }}</div>
+            <div class="package-price">₹{{ package.price }}</div>
+            <div style="color:#aaa; font-size:12px;">{{ package.sessions_count }} sessions</div>
+            <div style="color:#aaa; font-size:11px;">Valid for {{ package.validity_days }} days</div>
+            <button class="book-btn" style="margin-top: 10px; font-size:12px; padding:6px 12px;" onclick="alert('Package purchase coming soon!')">Buy Now</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Past Bookings -->
+    {% if past_bookings %}
+    <div class="booking-list">
+        <h3 style="margin-bottom: 15px;"><i class="fas fa-history" style="color:#f5b81b;"></i> Past Sessions</h3>
+        {% for booking in past_bookings %}
+        <div class="booking-item">
+            <div>
+                <div class="booking-trainer">{{ booking.trainer.name }}</div>
+                <div class="booking-date">{{ booking.booking_date|date:"d M Y" }} at {{ booking.booking_time|time:"h:i A" }}</div>
+            </div>
+            <div>
+                {% if booking.review %}
+                <span style="color: #ffd700;">⭐ {{ booking.review.rating }}/5</span>
+                {% else %}
+                <button class="rate-btn" onclick="openReviewModal({{ booking.id }}, '{{ booking.trainer.name }}')">Rate Session</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <footer>💪 Train with the best | Book your session today!</footer>
+</div>
+
+<!-- Booking Modal -->
+<div id="bookingModal" class="modal">
+    <div class="modal-content">
+        <h2>📅 Book Session</h2>
+        <input type="hidden" id="bookTrainerId">
+        <div id="bookTrainerName" style="color:#f5b81b; margin-bottom:15px;"></div>
+        <input type="date" id="bookingDate" onchange="loadSlots()">
+        <div id="slotContainer" class="slot-buttons"></div>
+        <textarea id="bookingGoal" rows="3" placeholder="What do you want to achieve? (Optional)"></textarea>
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeModal('bookingModal')">Cancel</button>
+            <button class="save-btn" onclick="createBooking()">Confirm Booking</button>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="reviewModal" class="modal">
+    <div class="modal-content">
+        <h2>⭐ Rate Your Session</h2>
+        <input type="hidden" id="reviewBookingId">
+        <div id="reviewTrainerName" style="color:#f5b81b; margin-bottom:15px;"></div>
+        <div style="margin-bottom:15px;">
+            <label>Rating:</label>
+            <div style="display:flex; gap:10px; margin-top:5px;">
+                <span class="star" data-rating="1">⭐</span>
+                <span class="star" data-rating="2">⭐</span>
+                <span class="star" data-rating="3">⭐</span>
+                <span class="star" data-rating="4">⭐</span>
+                <span class="star" data-rating="5">⭐</span>
+            </div>
+        </div>
+        <textarea id="reviewFeedback" rows="3" placeholder="Share your experience..."></textarea>
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeModal('reviewModal')">Cancel</button>
+            <button class="save-btn" onclick="submitReview()">Submit Review</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const csrftoken = getCookie('csrftoken');
+    let selectedSlot = null;
+    let selectedRating = 5;
+    
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) {
+            document.cookie.split(';').forEach(c => {
+                let [k, val] = c.trim().split('=');
+                if (k === name) v = decodeURIComponent(val);
+            });
+        }
+        return v;
+    }
+    
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    
+    // Booking
+    function openBookingModal(trainerId, trainerName, price) {
+        document.getElementById('bookTrainerId').value = trainerId;
+        document.getElementById('bookTrainerName').innerHTML = `${trainerName} - ₹${price}/session`;
+        document.getElementById('bookingDate').value = '';
+        document.getElementById('slotContainer').innerHTML = '';
+        selectedSlot = null;
+        openModal('bookingModal');
+    }
+    
+    async function loadSlots() {
+        const date = document.getElementById('bookingDate').value;
+        const trainerId = document.getElementById('bookTrainerId').value;
+        
+        if (!date) return;
+        
+        const res = await fetch('/user/api/get-trainer-slots/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ trainer_id: trainerId, booking_date: date })
+        });
+        const data = await res.json();
+        
+        const container = document.getElementById('slotContainer');
+        if (data.success && data.slots.length > 0) {
+            container.innerHTML = '';
+            data.slots.forEach(slot => {
+                const btn = document.createElement('button');
+                btn.className = 'slot-btn';
+                btn.innerText = slot;
+                btn.onclick = () => {
+                    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedSlot = slot;
+                };
+                container.appendChild(btn);
+            });
+        } else {
+            container.innerHTML = '<p style="color:#aaa">No slots available on this date</p>';
+        }
+    }
+    
+    async function createBooking() {
+        const trainerId = document.getElementById('bookTrainerId').value;
+        const date = document.getElementById('bookingDate').value;
+        const goal = document.getElementById('bookingGoal').value;
+        
+        if (!date || !selectedSlot) {
+            alert('Please select date and time slot');
+            return;
+        }
+        
+        const res = await fetch('/user/api/create-booking/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ trainer_id: trainerId, booking_date: date, booking_time: selectedSlot + ':00', goal: goal })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    }
+    
+    // Cancel Booking
+    async function cancelBooking(bookingId) {
+        if (!confirm('Cancel this booking?')) return;
+        const res = await fetch('/user/api/cancel-booking/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ booking_id: bookingId })
+        });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.message);
+    }
+    
+    // Review
+    function openReviewModal(bookingId, trainerName) {
+        document.getElementById('reviewBookingId').value = bookingId;
+        document.getElementById('reviewTrainerName').innerHTML = trainerName;
+        document.getElementById('reviewFeedback').value = '';
+        selectedRating = 5;
+        openModal('reviewModal');
+    }
+    
+    document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', function() {
+            selectedRating = parseInt(this.dataset.rating);
+            this.style.transform = 'scale(1.2)';
+            setTimeout(() => { this.style.transform = 'scale(1)'; }, 200);
+        });
+    });
+    
+    async function submitReview() {
+        const bookingId = document.getElementById('reviewBookingId').value;
+        const feedback = document.getElementById('reviewFeedback').value;
+        
+        const res = await fetch('/user/api/submit-review/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ booking_id: bookingId, rating: selectedRating, feedback: feedback })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    }
+</script>
+</body>
+</html>

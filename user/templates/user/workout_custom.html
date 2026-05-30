@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymFit - Custom Workout Plan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(245,184,27,0.2);
+        }
+
+        .logo h1 {
+            font-size: 32px;
+            background: linear-gradient(135deg, #fff, #f5b81b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .back-btn {
+            background: rgba(245,184,27,0.15);
+            border: 1px solid #f5b81b;
+            padding: 10px 24px;
+            border-radius: 40px;
+            color: #f5b81b;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #f5b81b;
+            color: #000;
+        }
+
+        .add-btn {
+            background: #f5b81b;
+            color: #000;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(245,184,27,0.3);
+        }
+
+        .day-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .day-tab {
+            background: #111;
+            border: 1px solid #333;
+            padding: 10px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 500;
+        }
+
+        .day-tab.active {
+            background: #f5b81b;
+            color: #000;
+            border-color: #f5b81b;
+        }
+
+        .day-tab:hover:not(.active) {
+            border-color: #f5b81b;
+            color: #f5b81b;
+        }
+
+        .workout-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .workout-card {
+            background: #111;
+            border-radius: 20px;
+            border-left: 6px solid #f5b81b;
+            padding: 20px;
+            transition: 0.3s;
+        }
+
+        .workout-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(245,184,27,0.15);
+        }
+
+        .muscle-badge {
+            background: rgba(245,184,27,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #f5b81b;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .exercise-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .exercise-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .exercise-stats span {
+            color: #f5b81b;
+            font-weight: bold;
+        }
+
+        .notes {
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .edit-btn, .delete-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        .edit-btn {
+            color: #f5b81b;
+            border: 1px solid #f5b81b;
+        }
+
+        .delete-btn {
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .empty-msg {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+            background: #111;
+            border-radius: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 90%;
+            border-left: 6px solid #f5b81b;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #f5b81b;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #f5b81b;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .save-btn {
+            background: #f5b81b;
+            color: #000;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .cancel-btn {
+            background: transparent;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 10px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #555;
+            border-top: 1px solid #1a1a1a;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .workout-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <h1>🏋️ GymFit | My Workout Plan</h1>
+            <p>Customize your weekly routine</p>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <button class="add-btn" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Exercise</button>
+            <a href="/dash/" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Day Tabs -->
+    <div class="day-tabs">
+        {% for day in days %}
+        <div class="day-tab {% if day == selected_day %}active{% endif %}" onclick="selectDay('{{ day }}')">
+            {{ day }}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Workout List -->
+    <div id="workoutList">
+        {% if workouts %}
+        <div class="workout-grid">
+            {% for workout in workouts %}
+            <div class="workout-card" data-id="{{ workout.id }}">
+                <span class="muscle-badge"><i class="fas fa-muscle"></i> {{ workout.muscle_group }}</span>
+                <div class="exercise-name">{{ workout.exercise_name }}</div>
+                <div class="exercise-stats">
+                    <span>🔢 {{ workout.sets }} sets</span>
+                    <span>🔁 {{ workout.reps }} reps</span>
+                </div>
+                {% if workout.notes %}
+                <div class="notes"><i class="fas fa-pen"></i> {{ workout.notes }}</div>
+                {% endif %}
+                <div class="card-actions">
+                    <button class="edit-btn" onclick="openEditModal({{ workout.id }})"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="delete-btn" onclick="deleteWorkout({{ workout.id }})"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-msg">
+            <i class="fas fa-dumbbell" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+            No exercises for {{ selected_day }}. Click "Add Exercise" to create your workout plan!
+        </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <i class="fas fa-calendar-alt"></i> Plan your week | Train smart, stay consistent 💪
+    </footer>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="workoutModal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle">Add Exercise</h2>
+        <form id="workoutForm">
+            <input type="hidden" id="workoutId">
+            <div class="form-group">
+                <label>Select Day</label>
+                <select id="dayName" required>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Muscle Group</label>
+                <select id="muscleGroup" required onchange="updateExerciseOptions()">
+                    <option value="">Select Muscle Group</option>
+                    <option value="Chest">🏋️ Chest</option>
+                    <option value="Back">💪 Back</option>
+                    <option value="Shoulders">🎯 Shoulders</option>
+                    <option value="Biceps">💪 Biceps</option>
+                    <option value="Triceps">💪 Triceps</option>
+                    <option value="Legs">🦵 Legs</option>
+                    <option value="Cardio">🏃 Cardio</option>
+                    <option value="Core">🎯 Core / Abs</option>
+                    <option value="Full Body">🔥 Full Body</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Exercise Name</label>
+                <select id="exerciseSelect" onchange="customExercise()">
+                    <option value="">Select Exercise</option>
+                </select>
+                <input type="text" id="exerciseCustom" placeholder="Or type your own exercise" style="margin-top: 8px; display: none;">
+            </div>
+            <div class="form-group">
+                <label>Sets</label>
+                <input type="number" id="sets" value="3" required>
+            </div>
+            <div class="form-group">
+                <label>Reps / Duration</label>
+                <input type="text" id="reps" value="12" placeholder="e.g., 12, 10 reps, 30 mins" required>
+            </div>
+            <div class="form-group">
+                <label>Notes (optional)</label>
+                <textarea id="notes" rows="2" placeholder="Tips, weight, etc..."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="save-btn">Save Exercise</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Exercise options by muscle group
+    const exerciseOptions = {
+        Chest: ['Bench Press', 'Incline Dumbbell Press', 'Decline Press', 'Cable Flyes', 'Dips', 'Push Ups', 'Chest Press Machine'],
+        Back: ['Pull Ups', 'Lat Pulldowns', 'Barbell Rows', 'Seated Cable Rows', 'Deadlifts', 'T-Bar Rows', 'Face Pulls'],
+        Shoulders: ['Overhead Press', 'Lateral Raises', 'Front Raises', 'Arnold Press', 'Face Pulls', 'Upright Rows'],
+        Biceps: ['Barbell Curl', 'Dumbbell Curl', 'Hammer Curls', 'Preacher Curls', 'Concentration Curls', 'Cable Curls'],
+        Triceps: ['Triceps Pushdown', 'Skull Crushers', 'Overhead Extension', 'Dips', 'Close Grip Bench Press'],
+        Legs: ['Squats', 'Deadlifts', 'Leg Press', 'Lunges', 'Leg Extensions', 'Leg Curls', 'Calf Raises', 'Bulgarian Splits'],
+        Cardio: ['Running', 'Cycling', 'Jump Rope', 'Swimming', 'Rowing', 'Stairmaster', 'Elliptical', 'HIIT'],
+        Core: ['Crunches', 'Leg Raises', 'Plank', 'Russian Twists', 'Mountain Climbers', 'Sit Ups', 'Hanging Leg Raises'],
+        'Full Body': ['Burpees', 'Clean and Press', 'Thrusters', 'Kettlebell Swings', 'Battle Ropes', 'Box Jumps']
+    };
+
+    function updateExerciseOptions() {
+        const muscle = document.getElementById('muscleGroup').value;
+        const select = document.getElementById('exerciseSelect');
+        const customInput = document.getElementById('exerciseCustom');
+        
+        select.innerHTML = '<option value="">Select Exercise</option>';
+        
+        if (muscle && exerciseOptions[muscle]) {
+            exerciseOptions[muscle].forEach(ex => {
+                const option = document.createElement('option');
+                option.value = ex;
+                option.textContent = ex;
+                select.appendChild(option);
+            });
+            select.style.display = 'block';
+            customInput.style.display = 'none';
+        } else {
+            select.style.display = 'block';
+            customInput.style.display = 'none';
+        }
+    }
+
+    function customExercise() {
+        const select = document.getElementById('exerciseSelect');
+        const customInput = document.getElementById('exerciseCustom');
+        
+        if (select.value === '') {
+            customInput.style.display = 'block';
+            customInput.placeholder = 'Type your exercise name...';
+        } else {
+            customInput.style.display = 'none';
+            customInput.value = '';
+        }
+    }
+
+    function getExerciseName() {
+        const select = document.getElementById('exerciseSelect');
+        const custom = document.getElementById('exerciseCustom');
+        
+        if (select.value) {
+            return select.value;
+        } else if (custom.value) {
+            return custom.value;
+        }
+        return '';
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+
+    function selectDay(day) {
+        window.location.href = `/user/dash/workout/?day=${day}`;
+    }
+
+    function openAddModal() {
+        document.getElementById('modalTitle').innerText = 'Add Exercise';
+        document.getElementById('workoutForm').reset();
+        document.getElementById('workoutId').value = '';
+        document.getElementById('dayName').value = '{{ selected_day|default:"Monday" }}';
+        document.getElementById('exerciseCustom').style.display = 'none';
+        document.getElementById('exerciseSelect').style.display = 'block';
+        document.getElementById('workoutModal').style.display = 'flex';
+    }
+
+    function openEditModal(id) {
+        fetch(`/user/dash/workout/get/${id}/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modalTitle').innerText = 'Edit Exercise';
+                document.getElementById('workoutId').value = data.id;
+                document.getElementById('dayName').value = data.day_name;
+                document.getElementById('muscleGroup').value = data.muscle_group;
+                updateExerciseOptions();
+                
+                // Check if exercise exists in dropdown
+                const select = document.getElementById('exerciseSelect');
+                let found = false;
+                for(let i = 0; i < select.options.length; i++) {
+                    if(select.options[i].value === data.exercise_name) {
+                        select.value = data.exercise_name;
+                        found = true;
+                        break;
+                    }
+                }
+                
+                if(!found) {
+                    select.value = '';
+                    const customInput = document.getElementById('exerciseCustom');
+                    customInput.style.display = 'block';
+                    customInput.value = data.exercise_name;
+                }
+                
+                document.getElementById('sets').value = data.sets;
+                document.getElementById('reps').value = data.reps;
+                document.getElementById('notes').value = data.notes || '';
+                document.getElementById('workoutModal').style.display = 'flex';
+            });
+    }
+
+    function closeModal() {
+        document.getElementById('workoutModal').style.display = 'none';
+    }
+
+    document.getElementById('workoutForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const workoutId = document.getElementById('workoutId').value;
+        const url = workoutId ? `/dash/workout/update/${workoutId}/` : '/user/dash/workout/add/';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                day_name: document.getElementById('dayName').value,
+                muscle_group: document.getElementById('muscleGroup').value,
+                exercise_name: getExerciseName(),
+                sets: document.getElementById('sets').value,
+                reps: document.getElementById('reps').value,
+                notes: document.getElementById('notes').value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    });
+
+    function deleteWorkout(id) {
+        if (confirm('Delete this exercise?')) {
+            fetch(`/user/dash/workout/delete/${id}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrftoken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else alert('Delete failed');
+            });
+        }
+    }
+
+    window.onclick = function(event) {
+        if (event.target === document.getElementById('workoutModal')) closeModal();
+    }
+</script>
+</body>
+</html>

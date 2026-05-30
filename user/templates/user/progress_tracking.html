@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymFit - Progress Tracking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; font-family: 'Inter', sans-serif; color: #fff; padding: 20px; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid rgba(245,184,27,0.2); }
+        .logo h1 { font-size: 28px; background: linear-gradient(135deg, #fff, #f5b81b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .back-btn { background: rgba(245,184,27,0.15); border: 1px solid #f5b81b; padding: 8px 20px; border-radius: 30px; color: #f5b81b; text-decoration: none; font-weight: 500; transition: 0.3s; }
+        .back-btn:hover { background: #f5b81b; color: #000; }
+        
+        .add-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 25px; }
+        .add-btn { background: #f5b81b; color: #000; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .add-btn:hover { transform: scale(1.02); box-shadow: 0 0 10px rgba(245,184,27,0.5); }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #111; border-radius: 16px; padding: 15px; text-align: center; border-left: 4px solid #f5b81b; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-number { font-size: 28px; font-weight: 800; color: #f5b81b; }
+        .stat-label { font-size: 12px; color: #aaa; margin-top: 5px; }
+        
+        .chart-card { background: #111; border-radius: 16px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #f5b81b; }
+        .chart-title { font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        canvas { max-height: 250px; width: 100%; }
+        
+        .progress-table { width: 100%; border-collapse: collapse; }
+        .progress-table th, .progress-table td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #222; }
+        .progress-table th { color: #f5b81b; font-weight: 600; }
+        
+        .progress-bar-bg { background: #222; border-radius: 20px; height: 8px; overflow: hidden; width: 100px; display: inline-block; }
+        .progress-bar-fill { height: 100%; background: #f5b81b; border-radius: 20px; transition: width 0.5s ease; }
+        
+        .week-grid { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; }
+        .week-day { text-align: center; flex: 1; }
+        .week-day .day-name { font-size: 11px; color: #aaa; margin-bottom: 5px; }
+        .week-day .dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; background: #1a1a1a; border: 1px solid #333; font-size: 16px; }
+        .week-day .dot.active { background: #f5b81b; color: #000; border-color: #f5b81b; }
+        
+        .badge-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .badge { background: #1a1a1a; border-radius: 30px; padding: 8px 18px; font-size: 13px; border: 1px solid #f5b81b; display: inline-flex; align-items: center; gap: 6px; }
+        
+        .reset-card { background: #111; border-radius: 16px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #ff4444; }
+        .reset-btn { background: #ff4444; color: #fff; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; margin-top: 10px; }
+        .reset-btn:hover { transform: scale(1.02); box-shadow: 0 0 10px rgba(255,68,68,0.5); }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; max-width: 400px; width: 90%; border-left: 4px solid #f5b81b; }
+        .modal-content h2 { margin-bottom: 20px; color: #f5b81b; font-size: 22px; }
+        .modal-content h2.warning { color: #ff4444; }
+        .modal-content input, .modal-content select { width: 100%; padding: 10px; margin-bottom: 12px; background: #252525; border: 1px solid #333; border-radius: 10px; color: #fff; font-size: 14px; }
+        .modal-content p { color: #aaa; margin-bottom: 15px; font-size: 14px; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 15px; }
+        .modal-buttons button { padding: 8px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        .save-btn { background: #f5b81b; color: #000; border: none; }
+        .cancel-btn { background: transparent; border: 1px solid #ff4444; color: #ff4444; }
+        .danger-btn { background: #ff4444; color: #fff; border: none; }
+        
+        footer { text-align: center; padding: 20px; color: #555; border-top: 1px solid #1a1a1a; margin-top: 30px; font-size: 12px; }
+        
+        .volume-number { font-family: monospace; font-size: 13px; color: #f5b81b; }
+        
+        @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .progress-table { font-size: 12px; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo"><h1>📊 GymFit | Progress Tracking</h1></div>
+        <a href="/user/dash/" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+
+    <!-- Add Buttons -->
+    <div class="add-buttons">
+        <button class="add-btn" onclick="openModal('weightModal')"><i class="fas fa-weight-scale"></i> Add Weight</button>
+        <button class="add-btn" onclick="openModal('strengthModal')"><i class="fas fa-dumbbell"></i> Add PR</button>
+        <button class="add-btn" onclick="openModal('workoutModal')"><i class="fas fa-check-circle"></i> Log Workout</button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-number" id="totalWorkouts">0</div><div class="stat-label">Total Workouts</div></div>
+        <div class="stat-card"><div class="stat-number" id="totalCalories">0</div><div class="stat-label">Calories Burned</div></div>
+        <div class="stat-card"><div class="stat-number" id="totalMinutes">0</div><div class="stat-label">Active Minutes</div></div>
+        <div class="stat-card"><div class="stat-number" id="activeDays">0</div><div class="stat-label">Active Days</div></div>
+    </div>
+
+    <!-- Weight Chart -->
+    <div class="chart-card">
+        <div class="chart-title"><i class="fas fa-weight-scale" style="color:#f5b81b;"></i> Weight Progress</div>
+        <canvas id="weightChart"></canvas>
+        <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 13px;">
+            <span>Starting: <strong id="startingWeight">-</strong> kg</span>
+            <span>Current: <strong id="currentWeight">-</strong> kg</span>
+            <span>Change: <strong id="weightChange">0</strong> kg</span>
+        </div>
+    </div>
+
+    <!-- Strength Progress (Updated with Reps and Volume) -->
+    <div class="chart-card">
+        <div class="chart-title"><i class="fas fa-dumbbell" style="color:#f5b81b;"></i> Strength Records (Big 4)</div>
+        <table class="progress-table">
+            <thead>
+                <tr>
+                    <th>Exercise</th>
+                    <th>Starting (W × R)</th>
+                    <th>Current (W × R)</th>
+                    <th>Progress</th>
+                </tr>
+            </thead>
+            <tbody id="strengthTable">
+                <tr><td colspan="4" style="text-align:center">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Weekly Activity -->
+    <div class="chart-card">
+        <div class="chart-title"><i class="fas fa-calendar-week" style="color:#f5b81b;"></i> This Week's Activity</div>
+        <div class="week-grid" id="weekGrid"></div>
+    </div>
+
+    <!-- Badges -->
+    <div class="chart-card">
+        <div class="chart-title"><i class="fas fa-medal" style="color:#f5b81b;"></i> Achievements</div>
+        <div class="badge-grid" id="badgeGrid">Loading...</div>
+    </div>
+
+    <!-- Reset Section -->
+    <div class="reset-card">
+        <div class="chart-title"><i class="fas fa-sync-alt" style="color:#ff4444;"></i> Reset Progress</div>
+        <p style="color: #aaa; font-size: 13px; margin-bottom: 10px;">
+            Start fresh with new goals. Your current progress will be saved in history.
+            <br>Weight and Strength records will NOT be deleted.
+        </p>
+        <button class="reset-btn" onclick="openResetModal()"><i class="fas fa-exclamation-triangle"></i> Reset All Progress</button>
+    </div>
+
+    <footer>💪 Track your progress, stay consistent | GymFit</footer>
+</div>
+
+<!-- Weight Modal -->
+<div id="weightModal" class="modal">
+    <div class="modal-content">
+        <h2>📊 Add Weight</h2>
+        <input type="number" id="weightValue" placeholder="Weight (kg)" step="0.1">
+        <input type="date" id="weightDate">
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeModal('weightModal')">Cancel</button>
+            <button class="save-btn" onclick="saveWeight()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Strength Modal -->
+<div id="strengthModal" class="modal">
+    <div class="modal-content">
+        <h2>🏋️ Add Personal Record</h2>
+        <select id="strengthExercise">
+            <option value="Bench Press">Bench Press</option>
+            <option value="Squat">Squat</option>
+            <option value="Deadlift">Deadlift</option>
+            <option value="Shoulder Press">Shoulder Press</option>
+        </select>
+        <input type="number" id="strengthWeight" placeholder="Weight (kg)" step="0.5">
+        <input type="number" id="strengthReps" placeholder="Reps">
+        <input type="date" id="strengthDate">
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeModal('strengthModal')">Cancel</button>
+            <button class="save-btn" onclick="saveStrength()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Workout Modal -->
+<div id="workoutModal" class="modal">
+    <div class="modal-content">
+        <h2>✅ Log Workout</h2>
+        <input type="text" id="workoutName" placeholder="Workout name (e.g., Chest Day)">
+        <input type="number" id="calories" placeholder="Calories burned">
+        <input type="number" id="duration" placeholder="Duration (minutes)">
+        <input type="date" id="workoutDate">
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeModal('workoutModal')">Cancel</button>
+            <button class="save-btn" onclick="saveWorkout()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div id="resetModal" class="modal">
+    <div class="modal-content">
+        <h2 class="warning">⚠️ Confirm Reset</h2>
+        <p>Are you sure you want to reset all your progress?</p>
+        <p style="color: #ff4444; font-size: 13px;">
+            This will reset: Total Workouts, Calories, Minutes, Active Days, Badges.<br>
+            Weight and Strength records will NOT be deleted.
+        </p>
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeModal('resetModal')">Cancel</button>
+            <button class="danger-btn" onclick="resetProgress()">Yes, Reset Progress</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const csrftoken = getCookie('csrftoken');
+    let weightChart = null;
+    
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) {
+            document.cookie.split(';').forEach(c => {
+                let [k, val] = c.trim().split('=');
+                if (k === name) v = decodeURIComponent(val);
+            });
+        }
+        return v;
+    }
+    
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function openResetModal() { openModal('resetModal'); }
+    
+    // Save Weight
+    async function saveWeight() {
+        const weight = document.getElementById('weightValue').value;
+        const date = document.getElementById('weightDate').value;
+        if (!weight || !date) { alert('Fill all fields'); return; }
+        const res = await fetch('/user/api/add-weight/', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ weight_kg: weight, date_recorded: date })
+        });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.message);
+    }
+    
+    // Save Strength
+    async function saveStrength() {
+        const exercise = document.getElementById('strengthExercise').value;
+        const weight = document.getElementById('strengthWeight').value;
+        const reps = document.getElementById('strengthReps').value;
+        const date = document.getElementById('strengthDate').value;
+        if (!exercise || !weight || !reps || !date) { alert('Fill all fields'); return; }
+        const res = await fetch('/user/api/add-strength/', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ exercise_name: exercise, weight_kg: weight, reps: reps, date_recorded: date })
+        });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.message);
+    }
+    
+    // Save Workout
+    async function saveWorkout() {
+        const name = document.getElementById('workoutName').value;
+        const cal = document.getElementById('calories').value;
+        const dur = document.getElementById('duration').value;
+        const date = document.getElementById('workoutDate').value;
+        if (!name || !cal) { alert('Fill required fields'); return; }
+        const res = await fetch('/user/api/add-workout-log/', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ workout_name: name, calories_burned: cal, duration_minutes: dur, workout_date: date })
+        });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.message);
+    }
+    
+    // Reset Progress
+    async function resetProgress() {
+        closeModal('resetModal');
+        const resetBtn = document.querySelector('.reset-btn');
+        const originalText = resetBtn.innerHTML;
+        resetBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Resetting...';
+        resetBtn.disabled = true;
+        
+        const res = await fetch('/user/api/reset-progress/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken }
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            alert('✅ Progress reset successfully! Page will reload.');
+            location.reload();
+        } else {
+            alert('❌ Error: ' + data.message);
+            resetBtn.innerHTML = originalText;
+            resetBtn.disabled = false;
+        }
+    }
+    
+    // Load Workout Stats
+    async function loadWorkoutStats() {
+        const res = await fetch('/user/api/get-workout-stats/');
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('totalWorkouts').innerText = data.total_workouts || 0;
+            document.getElementById('totalCalories').innerText = data.total_calories || 0;
+            document.getElementById('totalMinutes').innerText = data.total_minutes || 0;
+            document.getElementById('activeDays').innerText = data.active_days || 0;
+        }
+    }
+    
+    // Load Weight Data
+    async function loadWeightData() {
+        const res = await fetch('/user/api/get-weight-data/');
+        const data = await res.json();
+        if (data.success && data.weight_data.length > 0) {
+            const wd = data.weight_data;
+            document.getElementById('startingWeight').innerText = wd[0].weight;
+            document.getElementById('currentWeight').innerText = wd[wd.length-1].weight;
+            const change = (wd[wd.length-1].weight - wd[0].weight).toFixed(1);
+            document.getElementById('weightChange').innerText = change;
+            
+            if (weightChart) weightChart.destroy();
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            weightChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: wd.map(d => d.date),
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: wd.map(d => d.weight),
+                        borderColor: '#f5b81b',
+                        backgroundColor: 'rgba(245,184,27,0.05)',
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: '#f5b81b',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { labels: { color: '#fff' } } },
+                    scales: { y: { grid: { color: '#222' }, title: { display: true, text: 'kg', color: '#aaa' } }, x: { ticks: { color: '#aaa' } } }
+                }
+            });
+        }
+    }
+    
+    // Load Strength Data (Updated with Volume and Reps)
+    async function loadStrengthData() {
+        const res = await fetch('/user/api/get-strength-data/');
+        const data = await res.json();
+        const tbody = document.getElementById('strengthTable');
+        if (data.success && data.strength_data.length > 0) {
+            tbody.innerHTML = '';
+            data.strength_data.forEach(ex => {
+                const progress = ex.progress;
+                const progressColor = progress >= 0 ? '#00ff00' : '#ff4444';
+                const progressSign = progress >= 0 ? '+' : '';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${ex.name}</strong></td>
+                        <td class="volume-number">${ex.starting_weight} kg × ${ex.starting_reps} = ${ex.starting_volume}</td>
+                        <td class="volume-number">${ex.current_weight} kg × ${ex.current_reps} = ${ex.current_volume}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" style="width: ${Math.min(Math.abs(progress), 200)}%; background: ${progressColor};"></div>
+                                </div>
+                                <span style="color: ${progressColor}; font-weight: bold;">${progressSign}${progress}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">No records yet. Add your first PR!</td></tr>';
+        }
+    }
+    
+    // Load Weekly Activity
+    async function loadWeeklyActivity() {
+        const res = await fetch('/user/api/get-weekly-activity/');
+        const data = await res.json();
+        const weekGrid = document.getElementById('weekGrid');
+        if (data.success) {
+            weekGrid.innerHTML = '';
+            data.week.forEach(day => {
+                weekGrid.innerHTML += `<div class="week-day"><div class="day-name">${day.day}</div><div class="dot ${day.active ? 'active' : ''}">${day.active ? '✓' : '○'}</div></div>`;
+            });
+        }
+    }
+    
+    // Load Badges
+    async function loadBadges() {
+        const res = await fetch('/user/api/get-badges/');
+        const data = await res.json();
+        const badgeGrid = document.getElementById('badgeGrid');
+        if (data.success && data.badges.length > 0) {
+            badgeGrid.innerHTML = '';
+            data.badges.forEach(b => {
+                badgeGrid.innerHTML += `<div class="badge"><span>${b.badge_icon || '🏆'}</span> ${b.badge_name}</div>`;
+            });
+        } else {
+            badgeGrid.innerHTML = '<div class="badge">🎯 Complete workouts to earn badges!</div>';
+        }
+    }
+    
+    // Load All Data
+    async function loadAllData() {
+        await loadWorkoutStats();
+        await loadWeightData();
+        await loadStrengthData();
+        await loadWeeklyActivity();
+        await loadBadges();
+    }
+    
+    loadAllData();
+</script>
+</body>
+</html>

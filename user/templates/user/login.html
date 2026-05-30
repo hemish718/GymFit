@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GymFit Login</title>
+
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+
+<!-- GSAP CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+<style>
+    /* Additional inline styles for register link if CSS file doesn't have it */
+    .register-link {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .register-link a {
+        color: #f5b81b;
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    .register-link a:hover {
+        text-decoration: underline;
+        color: #ffd700;
+    }
+    .register-link p {
+        color: #aaa;
+        font-size: 14px;
+    }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <!-- LEFT ANIMATION SIDE -->
+    <div class="left">
+
+        <!-- 🔥 CSS DUMBBELL (NO IMAGE) -->
+        <div class="dumbbell" id="dumbbell">
+
+            <div class="plate left-plate"></div>
+            <div class="rod"></div>
+            <div class="handle"></div>
+            <div class="rod"></div>
+            <div class="plate right-plate"></div>
+
+        </div>
+
+        <h1>GymFit</h1>
+        <p>Train Hard. Stay Fit.</p>
+
+    </div>
+
+    <!-- RIGHT LOGIN SIDE -->
+    <div class="right">
+        <div class="login-box">
+            <h2>Login</h2>
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="text" placeholder="Email or Name" name="username">
+                <input type="password" placeholder="Password" name="password">
+
+                <button type="submit">Login</button>
+            </form>
+
+            <!-- 🔥 REGISTER LINK ADDED HERE -->
+            <div class="register-link">
+                <p>Don't have an account? <a href="/user/register/">Register Now</a></p>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="{% static 'js/login.js' %}"></script>
+</body>
+</html>

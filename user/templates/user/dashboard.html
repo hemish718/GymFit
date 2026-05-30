@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymFit - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 50px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(245,184,27,0.2);
+            animation: slideDown 0.6s ease;
+        }
+
+        .logo h1 {
+            font-size: 32px;
+            background: linear-gradient(135deg, #fff, #f5b81b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo p {
+            color: #f5b81b;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-name {
+            background: rgba(245,184,27,0.15);
+            padding: 8px 18px;
+            border-radius: 30px;
+            color: #f5b81b;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: rgba(255,68,68,0.15);
+            border: 1px solid #ff4444;
+            padding: 8px 18px;
+            border-radius: 30px;
+            color: #ff4444;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff4444;
+            color: #000;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: #111;
+            color: white;
+            padding: 25px;
+            border-radius: 20px;
+            border-left: 6px solid #f5b81b;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(245,184,27,0.2);
+        }
+
+        .card i {
+            font-size: 42px;
+            color: #f5b81b;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .card h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .info {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .yellow {
+            color: #f5b81b;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        button {
+            background: transparent;
+            border: 1.5px solid #f5b81b;
+            color: #f5b81b;
+            padding: 8px 20px;
+            border-radius: 30px;
+            margin-top: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.25s ease;
+        }
+
+        button:hover {
+            background: #f5b81b;
+            color: black;
+            transform: scale(1.05);
+            box-shadow: 0 0 12px rgba(245,184,27,0.5);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #555;
+            font-size: 12px;
+            opacity: 0;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <h1>🏋️ GymFit</h1>
+            <p>Train Hard. Stay Fit.</p>
+        </div>
+        <div class="user-info">
+            <span class="user-name"><i class="fas fa-user"></i> {{ user_name|default:"User" }}</span>
+            <a href="/user/logout/" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Card 1: Membership -->
+        <div class="card">
+            <i class="fas fa-id-card"></i>
+            <h3>Membership</h3>
+            <p>Premium access with exclusive benefits. Manage your plan & renewals.</p>
+            <div class="info"><span class="yellow">{{ plan_name|default:"No Plan" }}</span> PLAN</div>
+            <div class="info">💰 ₹{{ plan_price|default:"0" }}/year</div>
+            {% if end_date %}
+            <div class="info">📅 Valid till: {{ end_date|date:"d M Y" }}</div>
+            {% else %}
+            <div class="info">📅 No active membership</div>
+            {% endif %}
+            <button onclick="window.location.href='/user/dash/mem/'">View Details →</button>
+        </div>
+
+        <!-- Card 2: Workout Plans -->
+        <div class="card">
+            <i class="fas fa-heartbeat"></i>
+            <h3>Workout Plans</h3>
+            <p>Personalized strength, cardio & hypertrophy programs. Create your own plan.</p>
+            <div class="info"><span class="yellow">{{ total_workouts|default:"0" }}</span> TOTAL EXERCISES</div>
+            <div class="info">📅 Today: {{ today_workouts|default:"0" }} exercises planned</div>
+            <button onclick="window.location.href='/user/dash/workout/'">Explore →</button>
+        </div>
+
+        <!-- Card 3: Diet Plans (FIXED - ab sahi se khulega) -->
+        <div class="card">
+            <i class="fas fa-apple-alt"></i>
+            <h3>Diet Plans</h3>
+            <p>High protein meals & nutrition guide for your fitness goals.</p>
+            <div class="info"><span class="yellow">1,850</span> Kcal/day</div>
+            <div class="info">🍳 Breakfast: Oats + Whey</div>
+            <!-- 🔥 FIXED: onclick sahi kiya -->
+            <button onclick="window.location.href='/user/dash/diet/'">View →</button>
+        </div>
+
+        <!-- Card 4: Progress Tracking -->
+        <div class="card">
+            <i class="fas fa-chart-line"></i>
+            <h3>Progress Tracking</h3>
+            <p>Track weight, strength & muscle gain over time.</p>
+            <div class="info">🏋️ Strength Goal: <span class="yellow">72%</span></div>
+            <div class="info">⚖️ -3.2kg this month</div>
+            <button onclick="window.location.href='/user/dash/progress/'">Details →</button>
+        </div>
+
+      <!-- Card 4: Attendance & Streak -->
+    <div class="card">
+        <i class="fas fa-fingerprint"></i>
+        <h3>📅 Attendance</h3>
+        <p>Track your daily check-ins and maintain your streak.</p>
+        <div class="info">
+            🔥 <span class="yellow">{{ current_streak|default:"0" }}</span> Days Streak
+        </div>
+        <div class="info">
+            📅 This week: <span class="yellow">{{ weekly_workouts|default:"0" }}/7</span> days
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: {% widthratio weekly_workouts 7 100 %}%;"></div>
+        </div>
+        <div class="info">🎯 Goal: Workout 5 days this week</div>
+        <button onclick="window.location.href='/user/dash/attendance/'">Mark Attendance →</button>
+    </div>
+
+
+            <!-- Card 6: Trainer Booking -->
+        <div class="card">
+            <i class="fas fa-chalkboard-user"></i>
+            <h3>👨‍🏫 Trainer Booking</h3>
+            <p>1-on-1 expert coaching sessions with professional trainers.</p>
+            
+            <div class="info">
+                🎯 <span class="yellow">{{ total_trainers|default:"3" }}</span> Trainers Available
+            </div>
+            
+            {% if has_next_booking %}
+            <div class="info">
+                ⭐ Next: <strong>{{ next_booking_display }}</strong>
+                {% if next_trainer_name %} with {{ next_trainer_name }}{% endif %}
+            </div>
+            {% else %}
+            <div class="info">
+                ⭐ No upcoming sessions. Book your first session!
+            </div>
+            {% endif %}
+            
+            <div class="info">💰 Starting from ₹500/session</div>
+            <div class="info">📅 Book your preferred time slot</div>
+            
+            <button onclick="window.location.href='/user/dash/trainer/'">Book Now →</button>
+        </div>
+    </div>
+
+    <footer>GymFit — Complete Fitness Solution | Black & Yellow Theme 💪</footer>
+</div>
+
+<script>
+    window.addEventListener('load', function() {
+        gsap.to(".logo", { duration: 0.8, y: 0, opacity: 1, ease: "back.out(0.6)" });
+        gsap.to(".header .user-info", { duration: 0.6, x: 0, opacity: 1, delay: 0.2 });
+        gsap.to(".card", { duration: 0.6, y: 0, opacity: 1, stagger: 0.1, delay: 0.3, ease: "power2.out" });
+        gsap.to("footer", { duration: 0.5, opacity: 1, delay: 0.8 });
+    });
+</script>
+</body>
+</html>
