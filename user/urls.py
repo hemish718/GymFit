@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path
+from django.shortcuts import redirect
 # from . import views
 from user.views import register_view,login_view,dashboard_view,membership_view,payment_view, workout_custom,add_workout,get_workout,update_workout,delete_workout
 from user.views import diet_plans_view,api_save_goal,api_today_meals,api_add_meal,api_delete_meal,api_end_day
@@ -10,6 +11,7 @@ urlpatterns = [
     # Add this to your urlpatterns
     path('register/', register_view, name='register'),
     path('login/',login_view),
+    path('', lambda request: redirect('login/')),
     path('dash/',dashboard_view,name='dashboard'),
     path('dash/mem/',membership_view,name='membership'),
     path('dash/pay/',payment_view,name='payment'),
