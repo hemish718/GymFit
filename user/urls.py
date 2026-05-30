@@ -12,6 +12,7 @@ urlpatterns = [
     path('register/', register_view, name='register'),
     path('login/',login_view),
     # path('', lambda request: redirect('login/')),
+    path('', lambda request: redirect('user/login/')),
     path('dash/',dashboard_view,name='dashboard'),
     path('dash/mem/',membership_view,name='membership'),
     path('dash/pay/',payment_view,name='payment'),
