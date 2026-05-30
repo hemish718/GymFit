@@ -129,7 +129,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = '/home/SutharHemish/GymFit/staticfiles'
+# STATIC_ROOT = '//SutharHemish/GymFit/staticfiles'
 
 # # Load local settings (password etc.)
 # try:
