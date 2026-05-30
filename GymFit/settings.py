@@ -131,8 +131,8 @@ STATIC_URL = 'static/'
 STATIC_URL = '/static/'
 STATIC_ROOT = '/home/SutharHemish/GymFit/staticfiles'
 
-# Load local settings (password etc.)
-try:
-    from .local_settings import *
-except ImportError:
-    pass
+# # Load local settings (password etc.)
+# try:
+#     from .local_settings import *
+# except ImportError:
+#     pass
