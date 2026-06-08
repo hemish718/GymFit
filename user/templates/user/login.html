@@ -49,9 +49,7 @@
         margin-top: 0;
     }
 
-    /* =========================
-       🏋️ DUMBBELL (PURE CSS)
-       ========================= */
+    /* DUMBBELL */
     .dumbbell {
         position: absolute;
         display: flex;
@@ -60,7 +58,6 @@
         top: 35%;
     }
 
-    /* weight plates */
     .plate {
         width: 60px;
         height: 120px;
@@ -69,14 +66,12 @@
         box-shadow: 0 0 20px #FFD700;
     }
 
-    /* rod (bar) */
     .rod {
         width: 60px;
         height: 10px;
         background: #333;
     }
 
-    /* handle grip */
     .handle {
         width: 80px;
         height: 20px;
@@ -85,7 +80,6 @@
         border-radius: 5px;
     }
 
-    /* LEFT & RIGHT PLATES styling */
     .left-plate {
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
@@ -152,7 +146,27 @@
         box-shadow: 0 0 15px rgba(255,215,0,0.5);
     }
 
-    /* 🔥 REGISTER LINK STYLES */
+    /* 🔥 FORGOT PASSWORD LINK */
+    .forgot-link {
+        text-align: right;
+        margin-top: 8px;
+        margin-bottom: 15px;
+    }
+
+    .forgot-link a {
+        color: #FFD700;
+        font-size: 12px;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: 0.3s;
+    }
+
+    .forgot-link a:hover {
+        opacity: 1;
+        text-decoration: underline;
+    }
+
+    /* REGISTER LINK */
     .register-link {
         text-align: center;
         margin-top: 20px;
@@ -178,7 +192,7 @@
         color: #ffed4a;
     }
 
-    /* Error/Success Messages */
+    /* Messages */
     .messages {
         margin-bottom: 15px;
     }
@@ -232,21 +246,15 @@
 
     <!-- LEFT ANIMATION SIDE -->
     <div class="left">
-
-        <!-- 🔥 CSS DUMBBELL (NO IMAGE) -->
         <div class="dumbbell" id="dumbbell">
-
             <div class="plate left-plate"></div>
             <div class="rod"></div>
             <div class="handle"></div>
             <div class="rod"></div>
             <div class="plate right-plate"></div>
-
         </div>
-
         <h1>GymFit</h1>
         <p>Train Hard. Stay Fit.</p>
-
     </div>
 
     <!-- RIGHT LOGIN SIDE -->
@@ -269,10 +277,15 @@
                 <input type="text" placeholder="Email or Name" name="username" required>
                 <input type="password" placeholder="Password" name="password" required>
 
+                <!-- 🔥 FORGOT PASSWORD LINK -->
+                <div class="forgot-link">
+                    <a href="/user/forgot-password/">Forgot Password?</a>
+                </div>
+
                 <button type="submit">Login</button>
             </form>
 
-            <!-- 🔥 REGISTER LINK -->
+            <!-- REGISTER LINK -->
             <div class="register-link">
                 <p>Don't have an account? <a href="/user/register/">Register Now</a></p>
             </div>
@@ -283,13 +296,8 @@
 </div>
 
 <script>
-    // Wait for page to load completely
     document.addEventListener("DOMContentLoaded", function() {
-
-        // Check if GSAP is loaded
         if (typeof gsap !== 'undefined') {
-
-            // 🏋️ Floating animation (smooth gym feel)
             gsap.to("#dumbbell", {
                 y: -25,
                 duration: 1.8,
@@ -298,7 +306,6 @@
                 ease: "power1.inOut"
             });
 
-            // 🔄 Whole dumbbell slow rotation (premium feel)
             gsap.to("#dumbbell", {
                 rotation: 12,
                 duration: 2.5,
@@ -308,7 +315,6 @@
                 transformOrigin: "center center"
             });
 
-            // 💥 Login box entrance animation
             gsap.from(".login-box", {
                 x: 150,
                 opacity: 0,
@@ -316,7 +322,6 @@
                 ease: "power3.out"
             });
 
-            // ✨ Left text animation
             gsap.from(".left h1", {
                 y: -30,
                 opacity: 0,
@@ -331,7 +336,6 @@
                 delay: 0.5
             });
 
-            // ✨ Register link subtle animation
             gsap.from(".register-link", {
                 opacity: 0,
                 y: 20,
@@ -339,7 +343,6 @@
                 delay: 0.7
             });
 
-            // 🔥 Button hover effect
             const loginBtn = document.querySelector('.login-box button');
             if (loginBtn) {
                 loginBtn.addEventListener('mouseenter', () => {
@@ -350,7 +353,6 @@
                 });
             }
 
-            // 🎯 Input focus glow effect
             const inputs = document.querySelectorAll('.login-box input');
             inputs.forEach(input => {
                 input.addEventListener('focus', () => {
@@ -360,11 +362,6 @@
                     gsap.to(input, { borderColor: '#333', boxShadow: '0 0 0px', duration: 0.2 });
                 });
             });
-
-        } else {
-            console.log("GSAP not loaded - animations disabled");
-            // Fallback: just show the login box normally
-            document.querySelector('.login-box').style.opacity = '1';
         }
     });
 </script>

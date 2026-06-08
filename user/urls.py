@@ -7,12 +7,15 @@ from user.views import diet_plans_view,api_save_goal,api_today_meals,api_add_mea
 from user.views import progress_tracking_view,api_add_weight,api_add_strength,api_add_workout_log,api_get_weight_data,api_get_strength_data,api_get_badges
 from user.views import progress_tracking_view,api_reset_progress,api_submit_review,api_cancel_booking,api_create_booking,api_get_trainer_slots,trainer_booking_view
 from user.views import api_get_workout_stats,api_get_weekly_activity,attendance_view,api_mark_attendance
+from user.views import forgot_password_view,reset_password_view
 urlpatterns = [
     # Add this to your urlpatterns
     path('register/', register_view, name='register'),
     path('login/',login_view),
     # path('', lambda request: redirect('login/')),
     path('', lambda request: redirect('user/login/')),
+    path('user/forgot-password/',forgot_password_view, name='forgot_password'),
+    path('user/reset-password/',reset_password_view, name='reset_password'),
     path('dash/',dashboard_view,name='dashboard'),
     path('dash/mem/',membership_view,name='membership'),
     path('dash/pay/',payment_view,name='payment'),

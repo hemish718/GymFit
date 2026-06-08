@@ -119,6 +119,15 @@
             font-weight: bold;
         }
 
+        .status-inactive {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .status-inactive i {
+            color: #ff4444;
+        }
+
         .benefits-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -167,7 +176,7 @@
 
         .plans-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
             margin-bottom: 40px;
         }
@@ -238,27 +247,35 @@
             border-bottom: 1px solid #222;
         }
 
-        .upgrade-btn {
+        .select-btn {
             background: transparent;
             border: 2px solid #f5b81b;
             color: #f5b81b;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: 30px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
             width: 100%;
+            font-size: 16px;
         }
 
-        .upgrade-btn:hover:not(:disabled) {
+        .select-btn:hover {
             background: #f5b81b;
             color: #000;
+            transform: scale(1.02);
         }
 
-        .upgrade-btn:disabled {
-            border-color: #555;
-            color: #555;
-            cursor: not-allowed;
+        .current-btn {
+            background: #f5b81b;
+            color: #000;
+            border: 2px solid #f5b81b;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            width: 100%;
+            font-size: 16px;
+            cursor: default;
         }
 
         .history-table {
@@ -363,6 +380,9 @@
         @media (max-width: 768px) {
             .plan-name { font-size: 24px; }
             .section-title { font-size: 22px; }
+            .plans-container {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Popup Modal Styles */
@@ -433,7 +453,20 @@
         <div class="plan-details">
             <div class="detail-item"><i class="fas fa-calendar"></i> <span>Valid till: <strong>{{ current_membership.end_date|date:"d M Y"|default:"N/A" }}</strong></span></div>
             <div class="detail-item"><i class="fas fa-rupee-sign"></i> <span>Paid: <strong>₹{{ current_plan.price|default:"0" }}</strong> / year</span></div>
-            <div class="detail-item"><i class="fas fa-check-circle"></i> <span>Status: <span class="status-active">{{ current_membership.status|default:"Inactive"|title }} ✅</span></span></div>
+            
+            <div class="detail-item">
+                <i class="fas {% if current_membership.status|default:'Inactive' == 'active' %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                <span>Status: 
+                    <span class="{% if current_membership.status|default:'Inactive' == 'active' %}status-active{% else %}status-inactive{% endif %}">
+                        {% if current_membership.status|default:'Inactive' == 'active' %}
+                            ✅ Active
+                        {% else %}
+                            ❌ Inactive
+                        {% endif %}
+                    </span>
+                </span>
+            </div>
+            
             <div class="detail-item"><i class="fas fa-clock"></i> <span>Renewal: <strong>{{ current_membership.end_date|date:"d M Y"|default:"N/A" }}</strong></span></div>
         </div>
     </div>
@@ -451,8 +484,8 @@
     <h2 class="section-title">⬆️ Available Plans</h2>
     <div class="plans-container">
         {% for plan in all_plans %}
-        <div class="plan-card {% if plan.plan_name == current_plan.plan_name %}popular{% endif %}">
-            {% if plan.plan_name == current_plan.plan_name %}
+        <div class="plan-card {% if current_plan and plan.plan_name == current_plan.plan_name %}popular{% endif %}">
+            {% if current_plan and plan.plan_name == current_plan.plan_name %}
             <div class="popular-badge">CURRENT</div>
             {% endif %}
             <h3>{{ plan.plan_name }}</h3>
@@ -464,18 +497,18 @@
                 <li>✓ Gym Access</li>
                 {% endfor %}
             </ul>
-            {% if plan.plan_name == current_plan.plan_name %}
-                <button class="upgrade-btn" style="background:#f5b81b; color:#000;" disabled>✓ Current Plan</button>
-            {% elif plan.price > current_plan.price %}
-                <!-- 🔥 Only Higher Price Plans Show Upgrade Button -->
-                <button class="upgrade-btn" onclick="openUpgradePopup('{{ plan.plan_name }}', '{{ plan.price }}')">Upgrade →</button>
+            
+            <!-- 🔥 ALL PLANS ARE SELECTABLE NOW -->
+            {% if current_plan and plan.plan_name == current_plan.plan_name %}
+                <button class="current-btn" disabled>✓ Current Plan</button>
             {% else %}
-                <!-- Lower Price Plans - Disabled -->
-                <button class="upgrade-btn" disabled style="border-color:#555; color:#555;">⛔ Not Available</button>
+                <button class="select-btn" onclick="openPlanPopup('{{ plan.plan_name }}', '{{ plan.price }}')">
+                    🚀 Select This Plan
+                </button>
             {% endif %}
         </div>
         {% empty %}
-        <p>No plans available</p>
+        <p style="text-align: center; color: #888;">No plans available. Please contact admin.</p>
         {% endfor %}
     </div>
 
@@ -503,9 +536,13 @@
     </div>
 
     <div class="action-buttons">
+        {% if current_membership and current_membership.status == 'active' %}
         <button class="action-btn btn-primary" onclick="alert('Renew for ₹{{ current_plan.price|default:"0" }}')"><i class="fas fa-sync-alt"></i> Renew</button>
         <button class="action-btn btn-secondary" onclick="alert('Download Invoice')"><i class="fas fa-download"></i> Invoice</button>
         <button class="action-btn btn-danger" onclick="alert('Contact support to cancel')"><i class="fas fa-times-circle"></i> Cancel</button>
+        {% else %}
+        <button class="action-btn btn-primary" onclick="alert('Please select a plan first')"><i class="fas fa-shopping-cart"></i> Buy Membership</button>
+        {% endif %}
     </div>
 
     <footer>
@@ -513,15 +550,23 @@
     </footer>
 </div>
 
-<!-- UPGRADE POPUP MODAL -->
+<!-- PLAN SELECTION POPUP MODAL -->
 <div id="upgradeModal" class="modal">
     <div class="modal-content">
-        <h2>⬆️ Upgrade Plan</h2>
-        <p>Current Plan: <strong>{{ current_plan.plan_name|default:"Gold" }}</strong> (₹{{ current_plan.price|default:"12000" }}/year)</p>
-        <p>Upgrade to: <strong id="targetPlanName">Premium</strong> (₹<span id="targetPlanPrice">18000</span>/year)</p>
-        <p style="margin:15px 0;">Extra amount to pay: <strong style="color:#f5b81b; font-size:24px;" id="extraAmount">₹6,000</strong></p>
+        <h2>🎯 Confirm Plan Selection</h2>
+        <p>You are selecting: <strong id="targetPlanName" style="color:#f5b81b;">Premium</strong></p>
+        <p>Plan Price: <strong style="color:#f5b81b; font-size:24px;" id="targetPlanPrice">₹15000</strong> <span style="font-size:14px;">/year</span></p>
+        
+        {% if current_plan %}
+        <p style="margin:10px 0;">Current Plan: <strong>{{ current_plan.plan_name }}</strong> (₹{{ current_plan.price }}/year)</p>
+        <p>Amount to pay: <strong style="color:#f5b81b; font-size:22px;" id="extraAmount">₹0</strong></p>
+        {% else %}
+        <p style="margin:10px 0;">No active plan. Full amount will be charged.</p>
+        <p>Amount to pay: <strong style="color:#f5b81b; font-size:22px;" id="extraAmount">₹0</strong></p>
+        {% endif %}
+        
         <div class="modal-buttons">
-            <button class="confirm-btn" onclick="window.location.href='/user/dash/pay/'">✅ Confirm Upgrade</button>
+            <button class="confirm-btn" onclick="proceedToPayment()">✅ Confirm & Proceed to Payment</button>
             <button class="cancel-btn" onclick="closePopup()">❌ Cancel</button>
         </div>
     </div>
@@ -530,17 +575,27 @@
 <script>
     let selectedPlanName = '';
     let selectedPlanPrice = 0;
-    let currentPlanPrice = {{ current_plan.price|default:"12000" }};
+    let currentPlanPrice = {{ current_plan.price|default:"0" }};
+    let hasCurrentPlan = {% if current_plan %}true{% else %}false{% endif %};
 
-    function openUpgradePopup(planName, planPrice) {
+    function openPlanPopup(planName, planPrice) {
         selectedPlanName = planName;
         selectedPlanPrice = parseInt(planPrice);
         
-        let extra = selectedPlanPrice - currentPlanPrice;
+        let amountToPay = selectedPlanPrice;
+        let extraText = '';
+        
+        if (hasCurrentPlan && currentPlanPrice > 0) {
+            amountToPay = selectedPlanPrice - currentPlanPrice;
+            if (amountToPay < 0) amountToPay = 0;
+            extraText = ` (Upgrade fee: ₹${amountToPay})`;
+        } else {
+            extraText = ` (Full payment: ₹${amountToPay})`;
+        }
         
         document.getElementById('targetPlanName').innerText = planName;
-        document.getElementById('targetPlanPrice').innerText = planPrice;
-        document.getElementById('extraAmount').innerHTML = '₹' + extra;
+        document.getElementById('targetPlanPrice').innerHTML = '₹' + planPrice;
+        document.getElementById('extraAmount').innerHTML = '₹' + amountToPay + extraText;
         
         document.getElementById('upgradeModal').style.display = 'flex';
     }
@@ -549,11 +604,10 @@
         document.getElementById('upgradeModal').style.display = 'none';
     }
     
-    function confirmUpgrade() {
-        let extra = selectedPlanPrice - currentPlanPrice;
+    function proceedToPayment() {
         closePopup();
-        // Redirect to payment page
-        window.location.href = '/payment/?plan=' + selectedPlanName.toLowerCase() + '&amount=' + extra + '&current_plan={{ current_plan.plan_name|default:"Gold" }}';
+        // Redirect to payment page with selected plan details
+        window.location.href = '/payment/?plan=' + selectedPlanName.toLowerCase() + '&amount=' + selectedPlanPrice;
     }
 </script>
 </body>

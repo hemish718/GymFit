@@ -18,14 +18,14 @@
         
         .goal-section, .target-card { background: #111; border-radius: 24px; padding: 30px; margin-bottom: 30px; border-left: 6px solid #f5b81b; }
         .goal-buttons { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
-        .goal-btn { background: #ebd466; border: 1px solid #333; padding: 12px 28px; border-radius: 40px; cursor: pointer; transition: 0.3s; }
+        .goal-btn { background: #222; border: 1px solid #333; padding: 12px 28px; border-radius: 40px; cursor: pointer; transition: 0.3s; color: #fff; }
         .goal-btn.active, .goal-btn:hover { background: #f5b81b; color: #000; border-color: #f5b81b; }
         .user-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px 0; }
-        .user-info input, .user-info select { background: #080707; border: 1px solid #0f0b0b; padding: 12px; border-radius: 12px; color: #fff; }
+        .user-info input, .user-info select { background: #1a1a1a; border: 1px solid #333; padding: 12px; border-radius: 12px; color: #fff; }
         .target-number { font-size: 36px; font-weight: 800; color: #f5b81b; }
         .submit-btn { background: #f5b81b; color: #000; border: none; padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: bold; }
         
-        .meal-section { background: #ebe3e3; border-radius: 24px; padding: 25px; margin-bottom: 25px; border-left: 4px solid #f5b81b; }
+        .meal-section { background: #111; border-radius: 24px; padding: 25px; margin-bottom: 25px; border-left: 4px solid #f5b81b; }
         .meal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
         .add-btn { background: #f5b81b; color: #000; border: none; padding: 8px 20px; border-radius: 30px; cursor: pointer; }
         .meal-table { width: 100%; border-collapse: collapse; }
@@ -53,17 +53,20 @@
 <div class="container">
     <div class="header">
         <div class="logo"><h1>🥗 GymFit | Meal Tracker</h1></div>
-        <div><button class="edit-goal" onclick="showGoalSetup()"><i class="fas fa-edit"></i> Edit Goal</button>
-        <a href="/user/dash/" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a></div>
+        <div>
+            <button class="edit-goal" id="editGoalBtn" style="display: none;" onclick="showGoalSetup()"><i class="fas fa-edit"></i> Edit Goal</button>
+            <a href="/user/dash/" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        </div>
     </div>
 
     <!-- Goal Setup Section -->
-    <div id="goalSetup" class="goal-section">
+    <div id="goalSetup" class="goal-section" style="display: {% if has_goal %}none{% else %}block{% endif %};">
         <h2><i class="fas fa-bullseye" style="color:#f5b81b;"></i> Set Your Goal</h2>
+        <p style="color: #aaa; margin-bottom: 15px;">First time? Set your fitness goal and daily targets. You can edit this later.</p>
         <div class="goal-buttons">
-            <button class="goal-btn" onclick="selectGoal('weight_loss')">🏃 Weight Loss</button>
-            <button class="goal-btn" onclick="selectGoal('muscle_gain')">💪 Muscle Gain</button>
-            <button class="goal-btn" onclick="selectGoal('maintenance')">⚖️ Maintenance</button>
+            <button class="goal-btn" data-goal="weight_loss">🏃 Weight Loss</button>
+            <button class="goal-btn" data-goal="muscle_gain">💪 Muscle Gain</button>
+            <button class="goal-btn" data-goal="maintenance">⚖️ Maintenance</button>
         </div>
         <div id="userInfoForm">
             <div class="user-info">
@@ -84,42 +87,45 @@
     </div>
 
     <!-- Target Display -->
-    <div id="targetDisplay" style="display:none;" class="target-card">
+    <div id="targetDisplay" style="display: {% if has_goal %}block{% else %}none{% endif %};" class="target-card">
         <h3>🎯 Your Daily Target</h3>
-        <div class="target-number" id="targetCalories">0</div>
+        <div class="target-number" id="targetCalories">{{ daily_calories_target|default:"0" }}</div>
         <div>Daily Calories</div>
-        <div class="target-number" id="targetProtein" style="font-size:24px;">0g</div>
+        <div class="target-number" id="targetProtein" style="font-size:24px;">{{ daily_protein_target|default:"0" }}g</div>
         <div>Daily Protein</div>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+            <small>Goal Type: <strong id="goalTypeDisplay">{{ goal_type|default:"Not set"|title }}</strong></small>
+        </div>
     </div>
 
     <!-- Meal Tracking Section -->
-    <div id="mealTracking" style="display:none;">
+    <div id="mealTracking" style="display: {% if has_goal %}block{% else %}none{% endif %};">
         <div class="meal-section">
             <div class="meal-header"><h3>🍳 Breakfast</h3><button class="add-btn" onclick="showForm('breakfast')">+ Add</button></div>
-            <div id="breakfastList"><table class="meal-table"><thead><tr><th>Food</th><th>Quantity</th><th>Cal</th><th>Protein</th><th></th></tr></thead><tbody id="breakfastTable"></tbody></table></div>
+            <div id="breakfastList"><table class="meal-table"><thead><tr><th>Food</th><th>Quantity</th><th>Cal</th><th>Protein</th><th></th></tr></thead><tbody id="breakfastTable">{% for item in breakfast_items %}<tr><td>{{ item.food_name }}</td><td>{{ item.quantity|default:"-" }}</td><td>{{ item.calories }}</td><td>{{ item.protein|default:"0" }}g</td><td><button class="delete-btn" onclick="deleteMealFromDB('breakfast', '{{ item.food_name }}', {{ item.calories }})">Del</button></td></tr>{% endfor %}</tbody>}</table></div>
             <div id="breakfastForm" class="add-form"><div class="form-grid"><input type="text" id="breakfastName" placeholder="Food"><input type="text" id="breakfastQty" placeholder="Qty"><input type="number" id="breakfastCal" placeholder="Cal"><input type="number" id="breakfastProtein" placeholder="Protein(g)"></div><button class="submit-btn" onclick="addMeal('breakfast')">Save</button><button class="submit-btn" style="background:#333;" onclick="hideForm('breakfast')">Cancel</button></div>
         </div>
         <div class="meal-section">
             <div class="meal-header"><h3>🍱 Lunch</h3><button class="add-btn" onclick="showForm('lunch')">+ Add</button></div>
-            <div id="lunchList"><table class="meal-table"><thead><tr><th>Food</th><th>Quantity</th><th>Cal</th><th>Protein</th><th></th></tr></thead><tbody id="lunchTable"></tbody></table></div>
+            <div id="lunchList"><table class="meal-table"><thead><tr><th>Food</th><th>Quantity</th><th>Cal</th><th>Protein</th><th></th></tr></thead><tbody id="lunchTable">{% for item in lunch_items %}<tr><td>{{ item.food_name }}</td><td>{{ item.quantity|default:"-" }}</td><td>{{ item.calories }}</td><td>{{ item.protein|default:"0" }}g</td><td><button class="delete-btn" onclick="deleteMealFromDB('lunch', '{{ item.food_name }}', {{ item.calories }})">Del</button></td></tr>{% endfor %}</tbody>}</table></div>
             <div id="lunchForm" class="add-form"><div class="form-grid"><input type="text" id="lunchName" placeholder="Food"><input type="text" id="lunchQty" placeholder="Qty"><input type="number" id="lunchCal" placeholder="Cal"><input type="number" id="lunchProtein" placeholder="Protein(g)"></div><button class="submit-btn" onclick="addMeal('lunch')">Save</button><button class="submit-btn" style="background:#333;" onclick="hideForm('lunch')">Cancel</button></div>
         </div>
         <div class="meal-section">
             <div class="meal-header"><h3>🍎 Snacks</h3><button class="add-btn" onclick="showForm('snacks')">+ Add</button></div>
-            <div id="snacksList"><table class="meal-table"><thead><tr><th>Food</th><th>Quantity</th><th>Cal</th><th>Protein</th><th></th></tr></thead><tbody id="snacksTable"></tbody></table></div>
+            <div id="snacksList"><table class="meal-table"><thead><tr><th>Food</th><th>Quantity</th><th>Cal</th><th>Protein</th><th></th></tr></thead><tbody id="snacksTable">{% for item in snacks_items %}<tr><td>{{ item.food_name }}</td><td>{{ item.quantity|default:"-" }}</td><td>{{ item.calories }}</td><td>{{ item.protein|default:"0" }}g</td><td><button class="delete-btn" onclick="deleteMealFromDB('snacks', '{{ item.food_name }}', {{ item.calories }})">Del</button></td></tr>{% endfor %}</tbody>}</table></div>
             <div id="snacksForm" class="add-form"><div class="form-grid"><input type="text" id="snacksName" placeholder="Food"><input type="text" id="snacksQty" placeholder="Qty"><input type="number" id="snacksCal" placeholder="Cal"><input type="number" id="snacksProtein" placeholder="Protein(g)"></div><button class="submit-btn" onclick="addMeal('snacks')">Save</button><button class="submit-btn" style="background:#333;" onclick="hideForm('snacks')">Cancel</button></div>
         </div>
         <div class="meal-section">
             <div class="meal-header"><h3>🍽️ Dinner</h3><button class="add-btn" onclick="showForm('dinner')">+ Add</button></div>
-            <div id="dinnerList"><table class="meal-table"><thead><tr><th>Food</th><th>Quantity</th><th>Cal</th><th>Protein</th><th></th></tr></thead><tbody id="dinnerTable"></tbody></table></div>
+            <div id="dinnerList"><table class="meal-table"><thead><tr><th>Food</th><th>Quantity</th><th>Cal</th><th>Protein</th><th></th></tr></thead><tbody id="dinnerTable">{% for item in dinner_items %}<tr><td>{{ item.food_name }}</td><td>{{ item.quantity|default:"-" }}</td><td>{{ item.calories }}</td><td>{{ item.protein|default:"0" }}g</td><td><button class="delete-btn" onclick="deleteMealFromDB('dinner', '{{ item.food_name }}', {{ item.calories }})">Del</button></td></tr>{% endfor %}</tbody>}</table></div>
             <div id="dinnerForm" class="add-form"><div class="form-grid"><input type="text" id="dinnerName" placeholder="Food"><input type="text" id="dinnerQty" placeholder="Qty"><input type="number" id="dinnerCal" placeholder="Cal"><input type="number" id="dinnerProtein" placeholder="Protein(g)"></div><button class="submit-btn" onclick="addMeal('dinner')">Save</button><button class="submit-btn" style="background:#333;" onclick="hideForm('dinner')">Cancel</button></div>
         </div>
 
         <div class="total-summary">
             <h3>📊 Today's Total</h3>
             <div class="summary-stats">
-                <div><div class="summary-number" id="totalCaloriesDay">0</div><div>Calories</div><div class="progress-bar"><div class="progress-fill" id="calProgress"></div></div></div>
-                <div><div class="summary-number" id="totalProteinDay">0g</div><div>Protein</div><div class="progress-bar"><div class="progress-fill" id="proteinProgress"></div></div></div>
+                <div><div class="summary-number" id="totalCaloriesDay">{{ total_calories|default:"0" }}</div><div>Calories</div><div class="progress-bar"><div class="progress-fill" id="calProgress" style="width: {% widthratio total_calories daily_calories_target 100 %}%;"></div></div></div>
+                <div><div class="summary-number" id="totalProteinDay">{{ total_protein|default:"0" }}g</div><div>Protein</div><div class="progress-bar"><div class="progress-fill" id="proteinProgress" style="width: {% widthratio total_protein daily_protein_target 100 %}%;"></div></div></div>
             </div>
             <button class="end-day-btn" onclick="endDay()">📌 End Day & Save History →</button>
         </div>
@@ -130,14 +136,28 @@
 
 <script>
     let selectedGoal = 'muscle_gain';
-    let dailyTargetCal = 0;
-    let dailyTargetProtein = 0;
-    let mealsData = { breakfast: [], lunch: [], snacks: [], dinner: [] };
+    let dailyTargetCal = {{ daily_calories_target|default:"0" }};
+    let dailyTargetProtein = {{ daily_protein_target|default:"0" }};
+    let hasGoal = {{ has_goal|lower }};
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
     
     function getCookie(name) { let v = null; if (document.cookie) { document.cookie.split(';').forEach(c => { let [k, val] = c.trim().split('='); if (k === name) v = decodeURIComponent(val); }); } return v; }
     
-    function selectGoal(goal) { selectedGoal = goal; document.querySelectorAll('.goal-btn').forEach(btn => btn.classList.remove('active')); event.target.classList.add('active'); }
+    // Show/hide Edit Goal button
+    if (hasGoal) {
+        document.getElementById('editGoalBtn').style.display = 'inline-block';
+    }
+    
+    // Goal selection buttons
+    document.querySelectorAll('.goal-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.goal-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedGoal = this.getAttribute('data-goal');
+        });
+    });
+    
+    function selectGoal(goal) { selectedGoal = goal; }
     
     async function saveGoal() {
         const age = document.getElementById('age').value;
@@ -165,19 +185,17 @@
             document.getElementById('goalSetup').style.display = 'none';
             document.getElementById('targetDisplay').style.display = 'block';
             document.getElementById('mealTracking').style.display = 'block';
-            fetchTodayMeals();
+            document.getElementById('editGoalBtn').style.display = 'inline-block';
+            hasGoal = true;
+            location.reload(); // Refresh to load new data
         } else alert(data.message);
     }
     
-    async function fetchTodayMeals() {
-        const res = await fetch('/user/api/today-meals/');
-        const data = await res.json();
-        if (data.success) { mealsData = data.meals; for (let m in mealsData) renderTable(m); updateTotal(); }
-        else if (data.has_goal === false) { document.getElementById('goalSetup').style.display = 'block'; document.getElementById('targetDisplay').style.display = 'none'; document.getElementById('mealTracking').style.display = 'none'; }
-        else { document.getElementById('targetCalories').innerText = data.target_calories; dailyTargetCal = data.target_calories; dailyTargetProtein = data.target_protein; document.getElementById('targetProtein').innerHTML = data.target_protein + 'g'; document.getElementById('goalSetup').style.display = 'none'; document.getElementById('targetDisplay').style.display = 'block'; document.getElementById('mealTracking').style.display = 'block'; mealsData = data.meals || { breakfast: [], lunch: [], snacks: [], dinner: [] }; for (let m in mealsData) renderTable(m); updateTotal(); }
+    function showGoalSetup() {
+        document.getElementById('goalSetup').style.display = 'block';
+        document.getElementById('targetDisplay').style.display = 'none';
+        document.getElementById('mealTracking').style.display = 'none';
     }
-    
-    function renderTable(meal) { let tbody = document.getElementById(`${meal}Table`); tbody.innerHTML = ''; mealsData[meal].forEach((item, i) => { tbody.innerHTML += `<tr><td>${item.name}</td><td>${item.quantity || '-'}</td><td>${item.calories}</td><td>${item.protein || 0}g</td><td><button class="delete-btn" onclick="deleteMeal('${meal}',${i})">Del</button></td></tr>`; }); }
     
     function showForm(meal) { document.getElementById(`${meal}Form`).classList.add('active'); }
     function hideForm(meal) { document.getElementById(`${meal}Form`).classList.remove('active'); document.getElementById(`${meal}Name`).value = ''; document.getElementById(`${meal}Qty`).value = ''; document.getElementById(`${meal}Cal`).value = ''; document.getElementById(`${meal}Protein`).value = ''; }
@@ -190,36 +208,22 @@
         if (!name || !cal) { alert('Enter food name and calories'); return; }
         const res = await fetch('/user/api/add-meal/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken }, body: JSON.stringify({ meal_type: meal, food_name: name, quantity: qty, calories: cal, protein: protein }) });
         const data = await res.json();
-        if (data.success) { mealsData = data.meals; renderTable(meal); updateTotal(); hideForm(meal); } else alert(data.message);
+        if (data.success) { location.reload(); } else alert(data.message);
     }
     
-    async function deleteMeal(meal, idx) {
-        let item = mealsData[meal][idx];
-        const res = await fetch('/user/api/delete-meal/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken }, body: JSON.stringify({ meal_type: meal, food_name: item.name, calories: item.calories }) });
+    async function deleteMealFromDB(meal, foodName, calories) {
+        const res = await fetch('/user/api/delete-meal/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken }, body: JSON.stringify({ meal_type: meal, food_name: foodName, calories: calories }) });
         const data = await res.json();
-        if (data.success) { mealsData = data.meals; renderTable(meal); updateTotal(); }
-    }
-    
-    function updateTotal() {
-        let totalCal = 0, totalPro = 0;
-        for (let m in mealsData) mealsData[m].forEach(i => { totalCal += i.calories; totalPro += i.protein || 0; });
-        document.getElementById('totalCaloriesDay').innerText = totalCal;
-        document.getElementById('totalProteinDay').innerHTML = totalPro + 'g';
-        document.getElementById('calProgress').style.width = Math.min((totalCal/dailyTargetCal)*100, 100) + '%';
-        document.getElementById('proteinProgress').style.width = Math.min((totalPro/dailyTargetProtein)*100, 100) + '%';
+        if (data.success) { location.reload(); } else alert(data.message);
     }
     
     async function endDay() {
         if (!confirm('End day? Current data will be saved to history and reset for tomorrow.')) return;
         const res = await fetch('/user/api/end-day/', { method: 'POST', headers: { 'X-CSRFToken': csrftoken } });
         const data = await res.json();
-        if (data.success) { alert(data.message); mealsData = { breakfast: [], lunch: [], snacks: [], dinner: [] }; for (let m in mealsData) renderTable(m); updateTotal(); }
+        if (data.success) { alert(data.message); location.reload(); }
         else alert(data.message);
     }
-    
-    function showGoalSetup() { document.getElementById('goalSetup').style.display = 'block'; document.getElementById('targetDisplay').style.display = 'none'; document.getElementById('mealTracking').style.display = 'none'; }
-    
-    fetchTodayMeals();
 </script>
 </body>
 </html>

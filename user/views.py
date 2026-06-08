@@ -8,7 +8,6 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.hashers import make_password  # For password hashing
 from .models import Users
 import re
-
 def register_view(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -32,9 +31,9 @@ def register_view(request):
         if len(password) < 4:
             errors.append("Password must be at least 4 characters")
         
-        # Check if email already exists
+        # 🔥 DUPLICATE EMAIL CHECK - STRICT
         if Users.objects.filter(email=email).exists():
-            errors.append("Email already registered. Please login.")
+            errors.append("❌ This email is already registered! Please use a different email or login.")
         
         # Check phone format (optional)
         if phone and not phone.isdigit():
@@ -47,10 +46,19 @@ def register_view(request):
         if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
             errors.append("Invalid email format")
         
+        # Agar koi error hai toh old data ke saath wapas bhejo
         if errors:
             for error in errors:
                 messages.error(request, error)
-            return render(request, 'user/register.html')
+            
+            # Sirf non-password fields ko retain karo
+            return render(request, 'user/register.html', {
+                'old_data': {
+                    'name': name,
+                    'email': email,
+                    'phone': phone,
+                }
+            })
         
         # Create new user
         try:
@@ -64,9 +72,84 @@ def register_view(request):
             return redirect('/user/login/')
         except Exception as e:
             messages.error(request, f"Registration failed: {str(e)}")
-            return render(request, 'user/register.html')
+            # Exception aane par bhi old data retain karo
+            return render(request, 'user/register.html', {
+                'old_data': {
+                    'name': name,
+                    'email': email,
+                    'phone': phone,
+                }
+            })
     
+    # GET request - form khali dikhao
     return render(request, 'user/register.html')
+
+
+
+# Forgot Password View
+def forgot_password_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        
+        # Check if email exists
+        try:
+            user = Users.objects.get(email=email)
+            
+            # Store user_id in session for reset
+            request.session['reset_user_id'] = user.user_id
+            
+            messages.success(request, "Email verified! Please set your new password.")
+            return redirect('/user/reset-password/')
+            
+        except Users.DoesNotExist:
+            messages.error(request, "No account found with this email address.")
+            return render(request, 'user/forgot_password.html')
+    
+    return render(request, 'user/forgot_password.html')
+
+
+# Reset Password View
+def reset_password_view(request):
+    # Check if user_id exists in session
+    if 'reset_user_id' not in request.session:
+        messages.error(request, "Please request password reset first.")
+        return redirect('/user/forgot-password/')
+    
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Validation
+        if not new_password or not confirm_password:
+            messages.error(request, "Both fields are required.")
+            return render(request, 'user/reset_password.html')
+        
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, 'user/reset_password.html')
+        
+        if len(new_password) < 4:
+            messages.error(request, "Password must be at least 4 characters.")
+            return render(request, 'user/reset_password.html')
+        
+        # Update password
+        try:
+            user_id = request.session['reset_user_id']
+            user = Users.objects.get(user_id=user_id)
+            user.password = new_password  # No hashing as requested
+            user.save()
+            
+            # Clear session
+            del request.session['reset_user_id']
+            
+            messages.success(request, "Password updated successfully! Please login with your new password.")
+            return redirect('/user/login/')
+            
+        except Users.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('/user/forgot-password/')
+    
+    return render(request, 'user/reset_password.html')
 
 from django.contrib import messages
 from django.shortcuts import render, redirect
@@ -123,11 +206,9 @@ def login_view(request):
             
             messages.success(request, f"Welcome back, {user.name}! 🎉")
             
-            # 🔥 TRY BOTH REDIRECTS
-            try:
-                return redirect("/user/dash/")
-            except:
-                return redirect("/user/dash")
+            # 🔥 FIXED: Dashboard redirect (same as register page)
+            return redirect('/dash/')  # ← YEH CHANGE KIYA
+            
         else:
             print("❌ Password mismatch")  # 🔥 Debug
             messages.error(request, "Invalid Password. Please try again.")
@@ -329,13 +410,13 @@ from django.shortcuts import render, redirect
 from .models import Users, Memberships, MembershipPlans, Payments
 
 def membership_view(request):
-    # 🔥 Session se user_id lo (hardcoded ki jagah)
+    # Session se user_id lo
     user_id = request.session.get('user_id')
     
     if not user_id:
         return redirect('/login/')
     
-    # 🔥 Check karo user exist karta hai ya nahi
+    # Check karo user exist karta hai ya nahi
     try:
         user = Users.objects.get(user_id=user_id)
     except Users.DoesNotExist:
@@ -370,17 +451,32 @@ def membership_view(request):
     else:
         payments = []
     
+    # 🔥 NEW: Fetch diet goal for dashboard card
+    from django.utils import timezone
+    user_goal = UserGoal.objects.filter(user_id=user_id).first()
+    
+    # 🔥 NEW: Today's consumed calories and protein
+    today = timezone.now().date()
+    today_meals = DailyMeals.objects.filter(user_id=user_id, meal_date=today)
+    today_calories = sum(meal.calories for meal in today_meals)
+    today_protein = sum(meal.protein for meal in today_meals)
+    
     context = {
         'current_membership': current_membership,
         'current_plan': current_plan,
         'all_plans': all_plans,
         'payments': payments,
-        'user_name': user.name,  # 🔥 User name bhi bhej do
+        'user_name': user.name,
+        # 🔥 Diet goal data
+        'has_goal': user_goal is not None,
+        'daily_calories_target': user_goal.daily_calories if user_goal else 0,
+        'daily_protein_target': user_goal.daily_protein if user_goal else 0,
+        'today_calories': today_calories,
+        'today_protein': today_protein,
+        'goal_type': user_goal.goal_type if user_goal else None,
     }
     
     return render(request, 'user/membership.html', context)
-
-
 
 def payment_view(request):
     """Payment page view"""

@@ -135,6 +135,21 @@
             font-size: 20px;
         }
 
+        .progress-bar-bg {
+            background: #222;
+            border-radius: 10px;
+            height: 6px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-bar-fill {
+            background: #f5b81b;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
         button {
             background: transparent;
             border: 1.5px solid #f5b81b;
@@ -183,7 +198,7 @@
         </div>
         <div class="user-info">
             <span class="user-name"><i class="fas fa-user"></i> {{ user_name|default:"User" }}</span>
-            <a href="/user/logout/" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <a href="/user/login/" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
     </div>
 
@@ -213,15 +228,58 @@
             <button onclick="window.location.href='/user/dash/workout/'">Explore →</button>
         </div>
 
-        <!-- Card 3: Diet Plans (FIXED - ab sahi se khulega) -->
+        <!-- Card 3: Diet Plans (Updated with Goal and Today's Intake) -->
         <div class="card">
             <i class="fas fa-apple-alt"></i>
             <h3>Diet Plans</h3>
-            <p>High protein meals & nutrition guide for your fitness goals.</p>
-            <div class="info"><span class="yellow">1,850</span> Kcal/day</div>
-            <div class="info">🍳 Breakfast: Oats + Whey</div>
-            <!-- 🔥 FIXED: onclick sahi kiya -->
-            <button onclick="window.location.href='/user/dash/diet/'">View →</button>
+            <p>Track your daily nutrition & meet your fitness goals.</p>
+            
+            {% if has_goal and goal_calories > 0 %}
+                <!-- Goal Display -->
+                <div class="info">
+                    🎯 Target: <span class="yellow">{{ goal_calories }}</span> kcal / day
+                </div>
+                <div class="info">
+                    💪 Protein Target: <span class="yellow">{{ goal_protein }}g</span> / day
+                </div>
+                <div class="info" style="margin-top: 10px;">
+                    📊 Today's Intake:
+                </div>
+                <div class="info">
+                    🔥 Calories: <span class="yellow">{{ today_calories }}</span> / {{ goal_calories }} kcal
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {% widthratio today_calories goal_calories 100 %}%;"></div>
+                    </div>
+                </div>
+                <div class="info">
+                    🥩 Protein: <span class="yellow">{{ today_protein }}g</span> / {{ goal_protein }}g
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {% widthratio today_protein goal_protein 100 %}%;"></div>
+                    </div>
+                </div>
+                <div class="info" style="margin-top: 8px;">
+                    {% if today_calories >= goal_calories %}
+                        ✅ Goal achieved for today!
+                    {% else %}
+                        ⚠️ {{ remaining_calories }} kcal remaining
+                    {% endif %}
+                </div>
+            {% else %}
+                <!-- No Goal Set -->
+                <div class="info">
+                    🎯 <span class="yellow">No goal set</span>
+                </div>
+                <div class="info">
+                    💪 Set your daily calorie & protein targets
+                </div>
+                <div class="info" style="color: #ff8888;">
+                    ⚠️ Please set your diet goals first
+                </div>
+            {% endif %}
+            
+            <button onclick="window.location.href='/user/dash/diet/'">
+                {% if has_goal and goal_calories > 0 %}Track Meals →{% else %}Set Goal →{% endif %}
+            </button>
         </div>
 
         <!-- Card 4: Progress Tracking -->
@@ -229,31 +287,37 @@
             <i class="fas fa-chart-line"></i>
             <h3>Progress Tracking</h3>
             <p>Track weight, strength & muscle gain over time.</p>
-            <div class="info">🏋️ Strength Goal: <span class="yellow">72%</span></div>
-            <div class="info">⚖️ -3.2kg this month</div>
+            <div class="info">🏋️ Best Lift: <span class="yellow">{{ best_exercise|default:"No record" }}</span></div>
+            <div class="info">⚖️ {{ best_weight|default:"0" }}kg x {{ best_reps|default:"0" }} reps</div>
+            {% if weight_change_direction == 'loss' %}
+            <div class="info">📉 Weight change: <span style="color:#00ff00;">-{{ weight_change_kg }}kg</span> ({{ weight_change_percent }}%)</div>
+            {% elif weight_change_direction == 'gain' %}
+            <div class="info">📈 Weight change: <span style="color:#f5b81b;">+{{ weight_change_kg }}kg</span> ({{ weight_change_percent }}%)</div>
+            {% else %}
+            <div class="info">⚖️ No weight data yet</div>
+            {% endif %}
             <button onclick="window.location.href='/user/dash/progress/'">Details →</button>
         </div>
 
-      <!-- Card 4: Attendance & Streak -->
-    <div class="card">
-        <i class="fas fa-fingerprint"></i>
-        <h3>📅 Attendance</h3>
-        <p>Track your daily check-ins and maintain your streak.</p>
-        <div class="info">
-            🔥 <span class="yellow">{{ current_streak|default:"0" }}</span> Days Streak
+        <!-- Card 5: Attendance & Streak -->
+        <div class="card">
+            <i class="fas fa-fingerprint"></i>
+            <h3>📅 Attendance</h3>
+            <p>Track your daily check-ins and maintain your streak.</p>
+            <div class="info">
+                🔥 <span class="yellow">{{ current_streak|default:"0" }}</span> Days Streak
+            </div>
+            <div class="info">
+                📅 This week: <span class="yellow">{{ weekly_workouts|default:"0" }}/7</span> days
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: {% widthratio weekly_workouts|default:0 7 100 %}%;"></div>
+            </div>
+            <div class="info">🎯 Goal: Workout 5 days this week</div>
+            <button onclick="window.location.href='/user/dash/attendance/'">Mark Attendance →</button>
         </div>
-        <div class="info">
-            📅 This week: <span class="yellow">{{ weekly_workouts|default:"0" }}/7</span> days
-        </div>
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: {% widthratio weekly_workouts 7 100 %}%;"></div>
-        </div>
-        <div class="info">🎯 Goal: Workout 5 days this week</div>
-        <button onclick="window.location.href='/user/dash/attendance/'">Mark Attendance →</button>
-    </div>
 
-
-            <!-- Card 6: Trainer Booking -->
+        <!-- Card 6: Trainer Booking -->
         <div class="card">
             <i class="fas fa-chalkboard-user"></i>
             <h3>👨‍🏫 Trainer Booking</h3>
